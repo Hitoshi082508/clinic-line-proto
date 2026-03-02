@@ -18,46 +18,47 @@ type ProfileStep =
 const CONCERN_KEYS = Object.keys(CONCERN_LABELS);
 
 // ── DB ヘルパー ──────────────────────────
-async function getOrCreateCustomer(lineUserId: string) {
-  // 既存を取得
-  const { data: existing } = await supabase
+
+/**
+ * 顧客を upsert（取得 or 作成 + 更新）する
+ * line_user_id で一意。追加フィールドがあれば同時に反映。
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function upsertCustomer(lineUserId: string, fields?: Record<string, any>) {
+  const row = {
+    line_user_id: lineUserId,
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+
+  const { data, error } = await supabase
+    .from("customers")
+    .upsert(row, { onConflict: "line_user_id" })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[Profile] upsertCustomer failed:", error.message, error);
+    return null;
+  }
+  return data;
+}
+
+/**
+ * 顧客を取得するだけ（更新不要時）
+ */
+async function getCustomer(lineUserId: string) {
+  const { data, error } = await supabase
     .from("customers")
     .select("*")
     .eq("line_user_id", lineUserId)
     .single();
 
-  if (existing) return existing;
-
-  // 新規作成
-  const { data: created, error } = await supabase
-    .from("customers")
-    .insert({
-      line_user_id: lineUserId,
-      profile_step: "display_name",
-      profile_status: "in_progress",
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
   if (error) {
-    console.error("[Profile] Failed to create customer:", error);
+    console.error("[Profile] getCustomer failed:", error.message);
     return null;
   }
-  return created;
-}
-
-async function updateCustomer(
-  lineUserId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fields: Record<string, any>
-) {
-  const { error } = await supabase
-    .from("customers")
-    .update({ ...fields, updated_at: new Date().toISOString() })
-    .eq("line_user_id", lineUserId);
-
-  if (error) console.error("[Profile] Update failed:", error);
+  return data;
 }
 
 // ── Quick Reply ビルダー ─────────────────
@@ -142,20 +143,24 @@ function profileCompleteMessage() {
 
 // ── メインハンドラ ───────────────────────
 
-/** follow イベント or profile:reset */
+/** follow イベント or profile:reset → プロフィール開始 */
 export async function handleStartProfile(
   lineUserId: string,
   replyToken: string
 ) {
-  await updateCustomer(lineUserId, {
+  const customer = await upsertCustomer(lineUserId, {
     profile_step: "display_name",
     profile_status: "in_progress",
     concerns: [],
     profile_completed_at: null,
   });
 
-  // 新規の場合は先に insert してから
-  await getOrCreateCustomer(lineUserId);
+  if (!customer) {
+    await replyMessage(replyToken, [
+      textMessage("初期化に失敗しました。しばらくしてからもう一度お試しください。"),
+    ]);
+    return;
+  }
 
   await replyMessage(replyToken, [askDisplayName()]);
 }
@@ -166,11 +171,11 @@ export async function handleTextMessage(
   text: string,
   replyToken: string
 ) {
-  const customer = await getOrCreateCustomer(lineUserId);
+  const customer = await getCustomer(lineUserId);
+
   if (!customer) {
-    await replyMessage(replyToken, [
-      textMessage("エラーが発生しました。もう一度お試しください。"),
-    ]);
+    // 未登録ユーザー → プロフィール開始
+    await handleStartProfile(lineUserId, replyToken);
     return;
   }
 
@@ -178,10 +183,16 @@ export async function handleTextMessage(
 
   switch (step) {
     case "display_name": {
-      await updateCustomer(lineUserId, {
+      const updated = await upsertCustomer(lineUserId, {
         display_name: text.trim(),
         profile_step: "age_range",
       });
+      if (!updated) {
+        await replyMessage(replyToken, [
+          textMessage("保存に失敗しました。もう一度入力してください。"),
+        ]);
+        return;
+      }
       await replyMessage(replyToken, [
         textMessage(`「${text.trim()}」で登録しました。`),
         askAgeRange(),
@@ -192,7 +203,6 @@ export async function handleTextMessage(
     case "age_range":
     case "gender":
     case "concerns":
-      // これらのステップではボタン選択を期待
       await replyMessage(replyToken, [
         textMessage("下のボタンから選択してください。"),
       ]);
@@ -200,7 +210,6 @@ export async function handleTextMessage(
 
     case "done":
     default:
-      // プロフィール完了済み or 未開始
       await replyMessage(replyToken, [profileCompleteMessage()]);
       break;
   }
@@ -218,11 +227,9 @@ export async function handlePostback(
     return;
   }
 
-  const customer = await getOrCreateCustomer(lineUserId);
+  const customer = await getCustomer(lineUserId);
   if (!customer) {
-    await replyMessage(replyToken, [
-      textMessage("エラーが発生しました。もう一度お試しください。"),
-    ]);
+    await handleStartProfile(lineUserId, replyToken);
     return;
   }
 
@@ -232,7 +239,7 @@ export async function handlePostback(
   if (data.startsWith("age:") && step === "age_range") {
     const ageRange = data.replace("age:", "");
     const lbl = AGE_RANGE_LABELS[ageRange] ?? ageRange;
-    await updateCustomer(lineUserId, {
+    await upsertCustomer(lineUserId, {
       age_range: ageRange,
       profile_step: "gender",
     });
@@ -247,7 +254,7 @@ export async function handlePostback(
   if (data.startsWith("gender:") && step === "gender") {
     const gender = data.replace("gender:", "");
     const lbl = GENDER_LABELS[gender] ?? gender;
-    await updateCustomer(lineUserId, {
+    await upsertCustomer(lineUserId, {
       gender,
       profile_step: "concerns",
       concerns: [],
@@ -265,16 +272,14 @@ export async function handlePostback(
     const currentConcerns: string[] = customer.concerns ?? [];
 
     if (currentConcerns.includes(concernKey)) {
-      // 重複 → 追加せず通知
       const lbl = CONCERN_LABELS[concernKey] ?? concernKey;
       await replyMessage(replyToken, [
         textMessage(`「${lbl}」は既に選択済みです。`),
         askConcerns(currentConcerns),
       ]);
     } else {
-      // 追加
       const updated = [...currentConcerns, concernKey];
-      await updateCustomer(lineUserId, { concerns: updated });
+      await upsertCustomer(lineUserId, { concerns: updated });
       const lbl = CONCERN_LABELS[concernKey] ?? concernKey;
       await replyMessage(replyToken, [
         textMessage(`追加しました：${lbl}`),
@@ -292,7 +297,7 @@ export async function handlePostback(
         ? currentConcerns.map((c) => CONCERN_LABELS[c] ?? c).join(", ")
         : "なし";
 
-    await updateCustomer(lineUserId, {
+    await upsertCustomer(lineUserId, {
       profile_step: "done",
       profile_status: "complete",
       profile_completed_at: new Date().toISOString(),
@@ -305,7 +310,7 @@ export async function handlePostback(
     return;
   }
 
-  // 想定外の postback
+  // 想定外
   console.warn(`[Profile] Unexpected postback: data=${data} step=${step}`);
   await replyMessage(replyToken, [
     textMessage("操作を認識できませんでした。もう一度お試しください。"),
