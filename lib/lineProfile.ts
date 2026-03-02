@@ -3,6 +3,7 @@ import {
   replyMessage,
   textMessage,
   textWithQuickReply,
+  toggleFlexMessage,
   type QuickReplyAction,
 } from "@/lib/line";
 import { CONCERN_LABELS, AGE_RANGE_LABELS, GENDER_LABELS } from "@/lib/labels";
@@ -76,19 +77,6 @@ function genderQuickReply(): QuickReplyAction[] {
   }));
 }
 
-function concernQuickReply(): QuickReplyAction[] {
-  const items: QuickReplyAction[] = CONCERN_KEYS.map((key) => ({
-    label: CONCERN_LABELS[key],
-    data: `concern:add:${key}`,
-  }));
-  items.push({
-    label: "選択を終了する",
-    data: "concern:done",
-    displayText: "選択を終了する",
-  });
-  return items;
-}
-
 // ── ステップごとの質問メッセージ ─────────
 function askDisplayName() {
   return textMessage(
@@ -111,13 +99,14 @@ function askGender() {
 }
 
 function askConcerns(current: string[]) {
-  const selected =
-    current.length > 0
-      ? `\n現在の選択: ${current.map((c) => CONCERN_LABELS[c] ?? c).join(", ")}`
-      : "";
-  return textWithQuickReply(
-    `お悩みを選んでください（複数選択可）。${selected}\n選び終わったら「選択を終了する」を押してください。`,
-    concernQuickReply()
+  return toggleFlexMessage(
+    "お悩みを選んでください（複数選択可）",
+    CONCERN_KEYS.map((key) => ({
+      label: CONCERN_LABELS[key],
+      data: `concern:toggle:${key}`,
+      selected: current.includes(key),
+    })),
+    { label: "選択を完了する", data: "concern:done" }
   );
 }
 
@@ -266,26 +255,21 @@ export async function handlePostback(
     return;
   }
 
-  // concern:add:XX
-  if (data.startsWith("concern:add:") && step === "concerns") {
-    const concernKey = data.replace("concern:add:", "");
+  // concern:toggle:XX
+  if (data.startsWith("concern:toggle:") && step === "concerns") {
+    const concernKey = data.replace("concern:toggle:", "");
     const currentConcerns: string[] = customer.concerns ?? [];
 
+    let updated: string[];
     if (currentConcerns.includes(concernKey)) {
-      const lbl = CONCERN_LABELS[concernKey] ?? concernKey;
-      await replyMessage(replyToken, [
-        textMessage(`「${lbl}」は既に選択済みです。`),
-        askConcerns(currentConcerns),
-      ]);
+      // 選択解除
+      updated = currentConcerns.filter((c) => c !== concernKey);
     } else {
-      const updated = [...currentConcerns, concernKey];
-      await upsertCustomer(lineUserId, { concerns: updated });
-      const lbl = CONCERN_LABELS[concernKey] ?? concernKey;
-      await replyMessage(replyToken, [
-        textMessage(`追加しました：${lbl}`),
-        askConcerns(updated),
-      ]);
+      // 選択追加
+      updated = [...currentConcerns, concernKey];
     }
+    await upsertCustomer(lineUserId, { concerns: updated });
+    await replyMessage(replyToken, [askConcerns(updated)]);
     return;
   }
 
