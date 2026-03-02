@@ -3,7 +3,6 @@ import {
   replyMessage,
   textMessage,
   textWithQuickReply,
-  toggleFlexMessage,
   type QuickReplyAction,
 } from "@/lib/line";
 import { CONCERN_LABELS, AGE_RANGE_LABELS, GENDER_LABELS } from "@/lib/labels";
@@ -98,15 +97,13 @@ function askGender() {
   );
 }
 
-function askConcerns(current: string[]) {
-  return toggleFlexMessage(
-    "お悩みを選んでください（複数選択可）",
-    CONCERN_KEYS.map((key) => ({
-      label: CONCERN_LABELS[key],
-      data: `concern:toggle:${key}`,
-      selected: current.includes(key),
-    })),
-    { label: "選択を完了する", data: "concern:done" }
+function askConcerns() {
+  const list = CONCERN_KEYS.map(
+    (key, i) => `${i + 1}. ${CONCERN_LABELS[key]}`
+  ).join("\n");
+
+  return textMessage(
+    `お悩みを選んでください（複数選択可）\n番号をスペース区切りで入力してください。\n\n${list}\n0. 該当なし\n\n例: 1 3 5`
   );
 }
 
@@ -191,11 +188,57 @@ export async function handleTextMessage(
 
     case "age_range":
     case "gender":
-    case "concerns":
       await replyMessage(replyToken, [
         textMessage("下のボタンから選択してください。"),
       ]);
       break;
+
+    case "concerns": {
+      const trimmed = text.trim();
+
+      // 「0」 or 「なし」 → 該当なし
+      if (trimmed === "0" || trimmed === "なし") {
+        await upsertCustomer(lineUserId, {
+          concerns: [],
+          profile_step: "done",
+          profile_status: "complete",
+          profile_completed_at: new Date().toISOString(),
+        });
+        await replyMessage(replyToken, [
+          textMessage("お悩み: なし\n\nプロフィール登録が完了しました！"),
+          profileCompleteMessage(),
+        ]);
+        break;
+      }
+
+      // 番号パース（スペース・カンマ・全角スペース区切り）
+      const nums = trimmed.split(/[\s,、　]+/).map(Number);
+      const valid = nums.every((n) => Number.isInteger(n) && n >= 1 && n <= CONCERN_KEYS.length);
+
+      if (!valid || nums.length === 0) {
+        await replyMessage(replyToken, [
+          textMessage(`1〜${CONCERN_KEYS.length} の番号で入力してください。\n該当なしの場合は「0」を入力してください。`),
+          askConcerns(),
+        ]);
+        break;
+      }
+
+      const selected = [...new Set(nums)].map((n) => CONCERN_KEYS[n - 1]);
+      const summary = selected.map((c) => CONCERN_LABELS[c]).join("、");
+
+      await upsertCustomer(lineUserId, {
+        concerns: selected,
+        profile_step: "done",
+        profile_status: "complete",
+        profile_completed_at: new Date().toISOString(),
+      });
+
+      await replyMessage(replyToken, [
+        textMessage(`お悩み: ${summary}\n\nプロフィール登録が完了しました！`),
+        profileCompleteMessage(),
+      ]);
+      break;
+    }
 
     case "done":
     default:
@@ -250,46 +293,7 @@ export async function handlePostback(
     });
     await replyMessage(replyToken, [
       textMessage(`${lbl}で登録しました。`),
-      askConcerns([]),
-    ]);
-    return;
-  }
-
-  // concern:toggle:XX
-  if (data.startsWith("concern:toggle:") && step === "concerns") {
-    const concernKey = data.replace("concern:toggle:", "");
-    const currentConcerns: string[] = customer.concerns ?? [];
-
-    let updated: string[];
-    if (currentConcerns.includes(concernKey)) {
-      // 選択解除
-      updated = currentConcerns.filter((c) => c !== concernKey);
-    } else {
-      // 選択追加
-      updated = [...currentConcerns, concernKey];
-    }
-    await upsertCustomer(lineUserId, { concerns: updated });
-    await replyMessage(replyToken, [askConcerns(updated)]);
-    return;
-  }
-
-  // concern:done
-  if (data === "concern:done" && step === "concerns") {
-    const currentConcerns: string[] = customer.concerns ?? [];
-    const summary =
-      currentConcerns.length > 0
-        ? currentConcerns.map((c) => CONCERN_LABELS[c] ?? c).join(", ")
-        : "なし";
-
-    await upsertCustomer(lineUserId, {
-      profile_step: "done",
-      profile_status: "complete",
-      profile_completed_at: new Date().toISOString(),
-    });
-
-    await replyMessage(replyToken, [
-      textMessage(`お悩み: ${summary}\n\nプロフィール登録が完了しました！`),
-      profileCompleteMessage(),
+      askConcerns(),
     ]);
     return;
   }
