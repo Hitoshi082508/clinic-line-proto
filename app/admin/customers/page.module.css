@@ -1,42 +1,69 @@
 .container {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 32px 16px;
 }
 
 .title {
   font-size: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.searchForm {
-  display: flex;
-  gap: 8px;
+/* ── Filters ────────────────────────────── */
+.filters {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
 }
 
 .searchInput {
   flex: 1;
+  min-width: 200px;
   padding: 8px 12px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-.searchBtn {
-  padding: 8px 16px;
-  font-size: 14px;
-  border: 1px solid #333;
-  background: #333;
-  color: #fff;
+.filterLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+.filterSelect {
+  padding: 7px 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 100px;
+}
+
+.resetBtn {
+  padding: 8px 14px;
+  font-size: 13px;
+  border: 1px solid #999;
+  background: #fff;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.searchBtn:hover {
-  background: #555;
+.resetBtn:hover {
+  background: #f0f0f0;
 }
 
+/* ── Table ──────────────────────────────── */
 .error {
   color: #c00;
   margin-bottom: 12px;
@@ -45,23 +72,47 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .table th,
 .table td {
   border: 1px solid #ddd;
-  padding: 8px 10px;
+  padding: 7px 10px;
   text-align: left;
 }
 
 .table th {
   background: #f5f5f5;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.table tr:hover {
-  background: #fafafa;
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  background: #e8e8e8;
+}
+
+.sortActive {
+  background: #e0e8f0;
+  color: #0050b0;
+}
+
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover {
+  background: #eef4ff;
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 12px;
 }
 
 .empty {
@@ -70,6 +121,7 @@
   padding: 24px;
 }
 
+/* ── Nav ────────────────────────────────── */
 .nav {
   margin-top: 24px;
 }
@@ -77,4 +129,5 @@
 .nav a {
   color: #0070f3;
   text-decoration: underline;
+  margin-right: 16px;
 }

@@ -1,0 +1,161 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.back {
+  color: #0070f3;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+.title {
+  font-size: 24px;
+  margin: 12px 0 20px;
+}
+
+.error {
+  color: #c00;
+  margin-bottom: 12px;
+}
+
+/* ── Info table ─────────────────────────── */
+.infoTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.infoTable th {
+  text-align: left;
+  width: 120px;
+  padding: 8px 10px;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  font-weight: 600;
+}
+
+.infoTable td {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* ── Edit controls ──────────────────────── */
+.editRow {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dateInput {
+  padding: 5px 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.editBtn {
+  padding: 3px 10px;
+  font-size: 12px;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.editBtn:hover { background: #ddd; }
+
+.saveBtn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #0070f3;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.saveBtn:disabled { background: #999; }
+
+.cancelBtn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ── Treatments ─────────────────────────── */
+.sectionTitle {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.treatmentForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.treatmentSelect {
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.noteInput {
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.addBtn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #0070f3;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.addBtn:disabled { background: #999; }
+
+.muted {
+  color: #999;
+  font-size: 14px;
+}
+
+.treatmentTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.treatmentTable th,
+.treatmentTable td {
+  border: 1px solid #ddd;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.treatmentTable th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
