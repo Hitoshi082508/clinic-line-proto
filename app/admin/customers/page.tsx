@@ -217,7 +217,7 @@ export default function CustomersPage() {
       const res = await fetch("/api/segments/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filters, message: segmentMsg.trim(), limit: 50 }),
+        body: JSON.stringify({ filters, message: segmentMsg.trim() }),
       });
       const json = await res.json();
       setSegmentResult(json);
@@ -319,7 +319,7 @@ export default function CustomersPage() {
             <p>対象者を確認中...</p>
           ) : segmentPreview ? (
             <div className={styles.segmentInfo}>
-              <p>対象: <strong>{segmentPreview.count}人</strong>（最大50人に送信）</p>
+              <p>対象: <strong>{segmentPreview.count}人</strong></p>
               {segmentPreview.samples.length > 0 && (
                 <ul className={styles.sampleList}>
                   {segmentPreview.samples.map((s) => (
@@ -345,7 +345,7 @@ export default function CustomersPage() {
             onClick={handleSegmentSend}
             disabled={segmentSending || !segmentMsg.trim() || !segmentPreview?.count}
           >
-            {segmentSending ? "送信中..." : `${Math.min(segmentPreview?.count ?? 0, 50)}人に送信`}
+            {segmentSending ? "送信中..." : `${segmentPreview?.count ?? 0}人に送信`}
           </button>
 
           {segmentResult && (

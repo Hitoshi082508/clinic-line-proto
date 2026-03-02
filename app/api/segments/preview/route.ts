@@ -4,8 +4,7 @@ import { buildCustomerQuery, parseFiltersFromParams } from "@/lib/customerQuery"
 export async function GET(request: NextRequest) {
   const filters = parseFiltersFromParams(request.nextUrl.searchParams);
   const { data, error } = await buildCustomerQuery(filters)
-    .select("id, display_name, line_user_id")
-    .limit(500);
+    .select("id, display_name, line_user_id");
 
   if (error) {
     return NextResponse.json(

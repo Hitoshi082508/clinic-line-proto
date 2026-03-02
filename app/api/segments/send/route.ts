@@ -3,10 +3,8 @@ import { supabase } from "@/lib/supabaseServer";
 import { pushMessage, textMessage } from "@/lib/line";
 import { buildCustomerQuery, type CustomerFilters } from "@/lib/customerQuery";
 
-const MAX_SEGMENT_LIMIT = 50;
-
 export async function POST(request: NextRequest) {
-  let body: { filters: CustomerFilters; message: string; limit?: number };
+  let body: { filters: CustomerFilters; message: string };
   try {
     body = await request.json();
   } catch {
@@ -30,11 +28,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const effectiveLimit = Math.min(body.limit ?? MAX_SEGMENT_LIMIT, MAX_SEGMENT_LIMIT);
   const segmentId = crypto.randomUUID();
   const filters = body.filters ?? {};
 
-  const { data: customers, error: queryErr } = await buildCustomerQuery(filters).limit(effectiveLimit);
+  const { data: customers, error: queryErr } = await buildCustomerQuery(filters);
 
   if (queryErr) {
     return NextResponse.json(
