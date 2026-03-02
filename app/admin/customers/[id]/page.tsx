@@ -32,6 +32,15 @@ interface Treatment {
   created_at: string;
 }
 
+interface MessageLog {
+  id: string;
+  message_type: string;
+  message_text: string;
+  status: string;
+  error_detail: string | null;
+  created_at: string;
+}
+
 const TREATMENT_TYPE_KEYS = Object.keys(TREATMENT_TYPE_LABELS);
 
 export default function CustomerDetailPage() {
@@ -56,6 +65,12 @@ export default function CustomerDetailPage() {
   const [tSaving, setTSaving] = useState(false);
   const [tError, setTError] = useState<string | null>(null);
 
+  // message push
+  const [pushMsg, setPushMsg] = useState("");
+  const [pushSending, setPushSending] = useState(false);
+  const [pushResult, setPushResult] = useState<{ ok: boolean; error?: string } | null>(null);
+  const [messageLogs, setMessageLogs] = useState<MessageLog[]>([]);
+
   const fetchCustomer = useCallback(async () => {
     const res = await fetch(`/api/customers/${id}`);
     const json = await res.json();
@@ -73,13 +88,19 @@ export default function CustomerDetailPage() {
     setTreatments(json.treatments);
   }, [id]);
 
+  const fetchMessages = useCallback(async () => {
+    const res = await fetch(`/api/customers/${id}/messages`);
+    const json = await res.json();
+    if (json.ok) setMessageLogs(json.messages);
+  }, [id]);
+
   useEffect(() => {
     setLoading(true);
     setError(null);
-    Promise.all([fetchCustomer(), fetchTreatments()])
+    Promise.all([fetchCustomer(), fetchTreatments(), fetchMessages()])
       .catch((e) => setError(e instanceof Error ? e.message : "エラーが発生しました"))
       .finally(() => setLoading(false));
-  }, [fetchCustomer, fetchTreatments]);
+  }, [fetchCustomer, fetchTreatments, fetchMessages]);
 
   // ── Handlers ──────────────────────────
   const handleVisitSave = async () => {
@@ -125,6 +146,29 @@ export default function CustomerDetailPage() {
       setTError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
       setTSaving(false);
+    }
+  };
+
+  const handlePushSend = async () => {
+    if (!pushMsg.trim()) return;
+    setPushSending(true);
+    setPushResult(null);
+    try {
+      const res = await fetch("/api/line/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: id, message: pushMsg.trim() }),
+      });
+      const json = await res.json();
+      setPushResult({ ok: json.ok, error: json.error });
+      if (json.ok) {
+        setPushMsg("");
+        await fetchMessages();
+      }
+    } catch {
+      setPushResult({ ok: false, error: "送信に失敗しました" });
+    } finally {
+      setPushSending(false);
     }
   };
 
@@ -249,6 +293,65 @@ export default function CustomerDetailPage() {
                 <td>{label(TREATMENT_TYPE_LABELS, t.treatment_type)}</td>
                 <td>{formatDate(t.treatment_at)}</td>
                 <td>{t.note ?? "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* ── メッセージ送信 ── */}
+      <h2 className={styles.sectionTitle}>メッセージ送信</h2>
+
+      <div className={styles.pushForm}>
+        <textarea
+          className={styles.pushTextarea}
+          value={pushMsg}
+          onChange={(e) => setPushMsg(e.target.value)}
+          placeholder="送信するメッセージを入力..."
+          rows={3}
+          maxLength={5000}
+        />
+        <button
+          className={styles.pushBtn}
+          onClick={handlePushSend}
+          disabled={pushSending || !pushMsg.trim()}
+        >
+          {pushSending ? "送信中..." : "LINE に送信"}
+        </button>
+      </div>
+
+      {pushResult && (
+        <p className={pushResult.ok ? styles.success : styles.error}>
+          {pushResult.ok ? "送信しました" : `送信失敗: ${pushResult.error}`}
+        </p>
+      )}
+
+      {/* ── 送信履歴 ── */}
+      <h2 className={styles.sectionTitle}>送信履歴 ({messageLogs.length}件)</h2>
+
+      {messageLogs.length === 0 ? (
+        <p className={styles.muted}>送信履歴なし</p>
+      ) : (
+        <table className={styles.treatmentTable}>
+          <thead>
+            <tr>
+              <th>種別</th>
+              <th>メッセージ</th>
+              <th>ステータス</th>
+              <th>送信日時</th>
+            </tr>
+          </thead>
+          <tbody>
+            {messageLogs.map((m) => (
+              <tr key={m.id}>
+                <td>{m.message_type === "individual" ? "個別" : "セグメント"}</td>
+                <td className={styles.messageCell}>{m.message_text}</td>
+                <td>
+                  <span className={m.status === "sent" ? styles.statusSent : styles.statusFailed}>
+                    {m.status === "sent" ? "送信済" : "失敗"}
+                  </span>
+                </td>
+                <td>{formatDate(m.created_at)}</td>
               </tr>
             ))}
           </tbody>

@@ -108,6 +108,23 @@ export default function CustomersPage() {
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  // Segment send
+  const [segmentOpen, setSegmentOpen] = useState(false);
+  const [segmentMsg, setSegmentMsg] = useState("");
+  const [segmentPreview, setSegmentPreview] = useState<{
+    count: number;
+    samples: { id: string; display_name: string | null }[];
+  } | null>(null);
+  const [segmentPreviewLoading, setSegmentPreviewLoading] = useState(false);
+  const [segmentSending, setSegmentSending] = useState(false);
+  const [segmentResult, setSegmentResult] = useState<{
+    ok: boolean;
+    sent_count?: number;
+    failed_count?: number;
+    target_count?: number;
+    failed_samples?: { customer_id: string; error: string }[];
+  } | null>(null);
+
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -145,6 +162,70 @@ export default function CustomersPage() {
     } else {
       setSortKey(key);
       setSortDir("asc");
+    }
+  };
+
+  // ── Segment handlers ───────────────────
+  const buildFilterParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (gender) params.set("gender", gender);
+    if (ageRange) params.set("age_range", ageRange);
+    if (concern) params.set("concern", concern);
+    if (lastVisitFilter) params.set("last_visit_filter", lastVisitFilter);
+    return params;
+  }, [q, gender, ageRange, concern, lastVisitFilter]);
+
+  const fetchSegmentPreview = useCallback(async () => {
+    setSegmentPreviewLoading(true);
+    try {
+      const res = await fetch(`/api/segments/preview?${buildFilterParams()}`);
+      const json = await res.json();
+      if (json.ok) {
+        setSegmentPreview({ count: json.count, samples: json.samples });
+      }
+    } catch {
+      // silent
+    } finally {
+      setSegmentPreviewLoading(false);
+    }
+  }, [buildFilterParams]);
+
+  const handleSegmentOpen = async () => {
+    if (segmentOpen) {
+      setSegmentOpen(false);
+      setSegmentResult(null);
+      return;
+    }
+    setSegmentOpen(true);
+    setSegmentResult(null);
+    await fetchSegmentPreview();
+  };
+
+  const handleSegmentSend = async () => {
+    if (!segmentMsg.trim()) return;
+    if (!confirm(`${segmentPreview?.count ?? 0}人に送信します。よろしいですか？`)) return;
+    setSegmentSending(true);
+    setSegmentResult(null);
+    try {
+      const filters: Record<string, string> = {};
+      if (q) filters.q = q;
+      if (gender) filters.gender = gender;
+      if (ageRange) filters.age_range = ageRange;
+      if (concern) filters.concern = concern;
+      if (lastVisitFilter) filters.last_visit_filter = lastVisitFilter;
+      const res = await fetch("/api/segments/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filters, message: segmentMsg.trim(), limit: 50 }),
+      });
+      const json = await res.json();
+      setSegmentResult(json);
+      if (json.ok) setSegmentMsg("");
+    } catch {
+      setSegmentResult({ ok: false });
+    } finally {
+      setSegmentSending(false);
     }
   };
 
@@ -223,8 +304,71 @@ export default function CustomersPage() {
           <button onClick={handleReset} className={styles.resetBtn}>
             リセット
           </button>
+
+          <button onClick={handleSegmentOpen} className={styles.segmentBtn}>
+            {segmentOpen ? "閉じる" : "この条件のユーザーに送る"}
+          </button>
         </div>
       </div>
+
+      {segmentOpen && (
+        <div className={styles.segmentPanel}>
+          <h3 className={styles.segmentTitle}>セグメント配信</h3>
+
+          {segmentPreviewLoading ? (
+            <p>対象者を確認中...</p>
+          ) : segmentPreview ? (
+            <div className={styles.segmentInfo}>
+              <p>対象: <strong>{segmentPreview.count}人</strong>（最大50人に送信）</p>
+              {segmentPreview.samples.length > 0 && (
+                <ul className={styles.sampleList}>
+                  {segmentPreview.samples.map((s) => (
+                    <li key={s.id}>{s.display_name ?? "名前なし"}</li>
+                  ))}
+                  {segmentPreview.count > 5 && <li>...他 {segmentPreview.count - 5}人</li>}
+                </ul>
+              )}
+            </div>
+          ) : null}
+
+          <textarea
+            className={styles.segmentTextarea}
+            value={segmentMsg}
+            onChange={(e) => setSegmentMsg(e.target.value)}
+            placeholder="配信するメッセージを入力..."
+            rows={3}
+            maxLength={5000}
+          />
+
+          <button
+            className={styles.segmentSendBtn}
+            onClick={handleSegmentSend}
+            disabled={segmentSending || !segmentMsg.trim() || !segmentPreview?.count}
+          >
+            {segmentSending ? "送信中..." : `${Math.min(segmentPreview?.count ?? 0, 50)}人に送信`}
+          </button>
+
+          {segmentResult && (
+            <div className={segmentResult.ok ? styles.segmentSuccess : styles.segmentError}>
+              {segmentResult.ok ? (
+                <p>
+                  送信完了: {segmentResult.sent_count}人成功
+                  {(segmentResult.failed_count ?? 0) > 0 && `, ${segmentResult.failed_count}人失敗`}
+                </p>
+              ) : (
+                <p>送信に失敗しました</p>
+              )}
+              {segmentResult.failed_samples && segmentResult.failed_samples.length > 0 && (
+                <ul>
+                  {segmentResult.failed_samples.map((f, i) => (
+                    <li key={i}>{f.error}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && <p className={styles.error}>{error}</p>}
       {loading && <p>読み込み中...</p>}

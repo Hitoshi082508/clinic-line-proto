@@ -141,3 +141,33 @@ export async function replyMessage(
     console.error("[LINE Reply API error]", res.status, err);
   }
 }
+
+// ── Push API ────────────────────────────
+export interface PushResult {
+  ok: boolean;
+  status: number;
+  lineResponse?: string;
+}
+
+export async function pushMessage(
+  to: string,
+  messages: LineMessage[]
+): Promise<PushResult> {
+  const res = await fetch("https://api.line.me/v2/bot/message/push", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${CHANNEL_ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify({ to, messages }),
+  });
+
+  const body = await res.text();
+
+  if (!res.ok) {
+    console.error("[LINE Push API error]", res.status, body);
+    return { ok: false, status: res.status, lineResponse: body };
+  }
+
+  return { ok: true, status: res.status, lineResponse: body };
+}
