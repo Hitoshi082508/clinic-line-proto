@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySignature, replyMessage } from "@/lib/line";
+import { verifySignature } from "@/lib/line";
+import {
+  handleStartProfile,
+  handleTextMessage,
+  handlePostback,
+} from "@/lib/lineProfile";
+
+// LINE Webhook イベント型（必要最小限）
+interface LineEvent {
+  type: string;
+  replyToken?: string;
+  source?: { userId?: string };
+  message?: { type: string; text?: string };
+  postback?: { data: string };
+}
 
 export async function POST(request: NextRequest) {
-  // raw body を取得（署名検証に必要）
   const body = await request.text();
   const signature = request.headers.get("x-line-signature") ?? "";
 
-  // 署名検証
   if (!verifySignature(body, signature)) {
     console.warn("[Webhook] Signature verification failed");
     return NextResponse.json(
@@ -15,8 +27,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // イベント処理
-  let parsed: { events?: Array<{ type: string; replyToken?: string; source?: { userId?: string } }> };
+  let parsed: { events?: LineEvent[] };
   try {
     parsed = JSON.parse(body);
   } catch {
@@ -26,21 +37,44 @@ export async function POST(request: NextRequest) {
   const events = parsed.events ?? [];
 
   for (const event of events) {
-    const userId = event.source?.userId ?? "unknown";
+    const userId = event.source?.userId;
+    if (!userId || !event.replyToken) continue;
+
     console.log(`[Webhook] type=${event.type} userId=${userId}`);
 
-    // replyToken があるイベントに返信
-    if (event.replyToken) {
-      try {
-        await replyMessage(event.replyToken, [
-          { type: "text", text: "接続OK！" },
-        ]);
-      } catch (err) {
-        console.error("[Webhook] Reply failed:", err);
+    try {
+      switch (event.type) {
+        // 友だち追加 → プロフィール開始
+        case "follow":
+          await handleStartProfile(userId, event.replyToken);
+          break;
+
+        // テキストメッセージ
+        case "message":
+          if (event.message?.type === "text" && event.message.text) {
+            await handleTextMessage(
+              userId,
+              event.message.text,
+              event.replyToken
+            );
+          }
+          break;
+
+        // postback（ボタン選択）
+        case "postback":
+          if (event.postback?.data) {
+            await handlePostback(
+              userId,
+              event.postback.data,
+              event.replyToken
+            );
+          }
+          break;
       }
+    } catch (err) {
+      console.error(`[Webhook] Error handling event:`, err);
     }
   }
 
-  // 常に 200 を返す（リトライ防止）
   return NextResponse.json({ ok: true });
 }
