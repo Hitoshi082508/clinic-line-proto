@@ -80,7 +80,7 @@ function genderQuickReply(): QuickReplyAction[] {
 // ── ステップごとの質問メッセージ ─────────
 function askDisplayName() {
   return textMessage(
-    "プロフィール登録を始めます。\nまず、お名前（表示名）を入力してください。"
+    "プロフィール登録を始めます。\n\nカルテとの連携に使用しますので、本名（フルネーム）をご入力ください。"
   );
 }
 
