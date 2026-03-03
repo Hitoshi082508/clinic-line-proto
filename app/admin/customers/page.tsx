@@ -371,7 +371,12 @@ export default function CustomersPage() {
       )}
 
       {error && <p className={styles.error}>{error}</p>}
-      {loading && <p>読み込み中...</p>}
+      {loading && (
+        <div className="loadingContainer">
+          <div className="loadingSpinner"></div>
+          <p className="loadingText">顧客データを読み込み中...</p>
+        </div>
+      )}
 
       {!loading && (
         <table className={styles.table}>

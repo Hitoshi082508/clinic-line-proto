@@ -184,7 +184,14 @@ export default function CustomerDetailPage() {
     return new Date(iso).toLocaleString("ja-JP");
   };
 
-  if (loading) return <div className={styles.container}><p>読み込み中...</p></div>;
+  if (loading) return (
+    <div className={styles.container}>
+      <div className="loadingContainer">
+        <div className="loadingSpinner"></div>
+        <p className="loadingText">顧客情報を読み込み中...</p>
+      </div>
+    </div>
+  );
   if (error) return <div className={styles.container}><p className={styles.error}>{error}</p></div>;
   if (!customer) return <div className={styles.container}><p>見つかりません</p></div>;
 
