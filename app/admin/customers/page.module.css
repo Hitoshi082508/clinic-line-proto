@@ -1,113 +1,129 @@
 .container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 16px;
+  padding: 40px 24px;
 }
 
 .title {
-  font-size: 24px;
-  margin-bottom: 16px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: var(--color-text-dark);
 }
 
 /* ── Filters ────────────────────────────── */
 .filters {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 32px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .filterRow {
   display: flex;
-  gap: 10px;
+  gap: 16px;
   flex-wrap: wrap;
   align-items: flex-end;
+  margin-bottom: 16px;
 }
 
 .searchInput {
   flex: 1;
   min-width: 200px;
-  padding: 8px 12px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
 }
 
 .filterLabel {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #555;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-dark);
 }
 
 .filterSelect {
-  padding: 7px 8px;
-  font-size: 13px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  min-width: 100px;
+  font-size: 14px;
+  min-width: 120px;
 }
 
 .resetBtn {
-  padding: 8px 14px;
-  font-size: 13px;
-  border: 1px solid #999;
-  background: #fff;
-  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  color: var(--color-text-dark);
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 150ms ease;
 }
 
 .resetBtn:hover {
-  background: #f0f0f0;
+  background: var(--color-bg-light);
+  border-color: var(--color-primary-blue);
+  color: var(--color-primary-blue);
 }
 
 /* ── Table ──────────────────────────────── */
 .error {
-  color: #c00;
+  color: var(--color-error);
   margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .table th,
 .table td {
-  border: 1px solid #ddd;
-  padding: 7px 10px;
+  padding: 16px;
   text-align: left;
+  color: var(--color-text-dark);
 }
 
 .table th {
-  background: #f5f5f5;
+  background: var(--color-bg-light);
   font-weight: 600;
   white-space: nowrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  border-bottom: 1px solid var(--color-border);
 }
 
 .sortable {
   cursor: pointer;
   user-select: none;
+  transition: background-color 150ms ease;
 }
 
 .sortable:hover {
-  background: #e8e8e8;
+  background: #e8f2ff;
 }
 
 .sortActive {
-  background: #e0e8f0;
-  color: #0050b0;
+  background: #dbeafe;
+  color: var(--color-primary-blue);
+  font-weight: 600;
 }
 
 .clickableRow {
   cursor: pointer;
+  transition: background-color 150ms ease;
 }
 
 .clickableRow:hover {
-  background: #eef4ff;
+  background: var(--color-bg-light);
 }
 
 .mono {
@@ -117,105 +133,140 @@
 
 .empty {
   text-align: center;
-  color: #999;
-  padding: 24px;
+  color: var(--color-text-subtle);
+  padding: 40px 24px;
+  font-size: 15px;
 }
 
 /* ── Segment send ──────────────────────── */
 .segmentBtn {
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 10px 20px;
+  font-size: 14px;
   font-weight: 600;
-  border: 2px solid #06C755;
-  background: #fff;
-  color: #06C755;
-  border-radius: 4px;
+  background: var(--color-line-green);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 150ms ease;
 }
 
 .segmentBtn:hover {
-  background: #06C755;
-  color: #fff;
+  background: #05a94d;
+  box-shadow: 0 4px 6px rgba(6, 199, 85, 0.2);
+  transform: scale(1.02);
 }
 
 .segmentPanel {
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  background: #fafafa;
+  padding: 24px;
+  margin-bottom: 32px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .segmentTitle {
-  font-size: 16px;
-  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px;
+  color: var(--color-text-dark);
 }
 
 .segmentInfo {
-  margin-bottom: 12px;
-  font-size: 14px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  color: var(--color-text-dark);
 }
 
 .sampleList {
-  margin: 6px 0 0 20px;
-  font-size: 13px;
-  color: #555;
+  margin: 8px 0 0 20px;
+  font-size: 14px;
+  color: var(--color-text-subtle);
 }
 
 .segmentTextarea {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
   resize: vertical;
   font-family: inherit;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   box-sizing: border-box;
+  transition: border-color 150ms ease;
+  min-height: 100px;
+}
+
+.segmentTextarea:focus {
+  outline: none;
+  border-color: var(--color-primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .segmentSendBtn {
-  padding: 8px 20px;
+  padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
-  background: #06C755;
-  color: #fff;
+  background: var(--color-line-green);
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.segmentSendBtn:hover {
+  background: #05a94d;
+  box-shadow: 0 4px 6px rgba(6, 199, 85, 0.2);
+  transform: scale(1.02);
 }
 
 .segmentSendBtn:disabled {
-  background: #999;
+  background: var(--color-text-subtle);
   cursor: not-allowed;
+  transform: scale(1);
+  box-shadow: none;
 }
 
 .segmentSuccess {
-  margin-top: 12px;
-  padding: 10px;
-  background: #e8f7ee;
-  border: 1px solid #06C755;
-  border-radius: 4px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #ecfdf5;
+  border: 1px solid var(--color-success);
+  border-radius: 6px;
   font-size: 14px;
+  color: var(--color-success);
+  font-weight: 500;
 }
 
 .segmentError {
-  margin-top: 12px;
-  padding: 10px;
-  background: #ffeaea;
-  border: 1px solid #c00;
-  border-radius: 4px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid var(--color-error);
+  border-radius: 6px;
   font-size: 14px;
-  color: #c00;
+  color: var(--color-error);
+  font-weight: 500;
 }
 
 /* ── Nav ────────────────────────────────── */
 .nav {
-  margin-top: 24px;
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--color-border);
 }
 
 .nav a {
-  color: #0070f3;
+  color: var(--color-primary-blue);
   text-decoration: underline;
   margin-right: 16px;
+  font-weight: 500;
+  transition: color 150ms ease;
+}
+
+.nav a:hover {
+  color: #1d4ed8;
 }

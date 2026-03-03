@@ -1,61 +1,88 @@
 .container {
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 32px 16px;
+  padding: 40px 24px;
 }
 
 .title {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: var(--color-text-dark);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--color-text-dark);
 }
 
 .input {
   padding: 8px 12px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
   font-weight: 400;
+  transition: all 150ms ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .fieldset {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 16px;
+  background: var(--color-bg-light);
 }
 
 .legend {
   font-size: 14px;
   font-weight: 600;
-  padding: 0 4px;
+  padding: 0 6px;
+  color: var(--color-text-dark);
 }
 
 .checkboxGroup {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 14px;
   font-weight: 400;
+  cursor: pointer;
+  color: var(--color-text-dark);
+  transition: color 150ms ease;
+}
+
+.checkboxLabel:hover {
+  color: var(--color-primary-blue);
+}
+
+.checkboxLabel input {
   cursor: pointer;
 }
 
@@ -63,48 +90,69 @@
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
-  background: #0070f3;
-  color: #fff;
+  background: var(--color-primary-blue);
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   margin-top: 8px;
+  transition: all 150ms ease;
+  align-self: flex-start;
 }
 
 .submitBtn:hover {
-  background: #005bb5;
+  background: #1d4ed8;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+  transform: scale(1.02);
 }
 
 .submitBtn:disabled {
-  background: #999;
+  background: var(--color-text-subtle);
   cursor: not-allowed;
+  transform: scale(1);
 }
 
 .result {
-  margin-top: 24px;
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  margin-top: 32px;
+  padding: 20px;
+  background: var(--color-bg-light);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
 }
 
 .result h2 {
   font-size: 16px;
-  margin-bottom: 8px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--color-text-dark);
 }
 
 .result pre {
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;
+  color: var(--color-text-subtle);
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
 }
 
 .nav {
-  margin-top: 24px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
 }
 
 .nav a {
-  color: #0070f3;
+  color: var(--color-primary-blue);
   text-decoration: underline;
+  font-weight: 500;
+  transition: color 150ms ease;
+}
+
+.nav a:hover {
+  color: #1d4ed8;
 }
